@@ -1,0 +1,67 @@
+{
+  "name": "@marsson/sf-data-drift",
+  "version": "0.1.0",
+  "description": "Measure metadata drift between a Salesforce org and its Git repository",
+  "author": "Marsson",
+  "main": "lib/index.js",
+  "license": "MIT",
+  "oclif": {
+    "bin": "sf",
+    "dirname": "sf",
+    "topicSeparator": " ",
+    "commands": "./lib/commands",
+    "plugins": [
+      "@oclif/plugin-help",
+      "@oclif/plugin-not-found"
+    ],
+    "topics": {
+      "drift": {
+        "description": "Detect and report metadata drift between Salesforce orgs and Git repositories"
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf lib",
+    "prepack": "npm run build && oclif manifest",
+    "test": "TS_NODE_PROJECT=tsconfig.test.json mocha --timeout 30000",
+    "lint": "eslint src --ext .ts"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@oclif/core": "^3",
+    "@oclif/plugin-help": "^6",
+    "@oclif/plugin-not-found": "^3",
+    "@salesforce/core": "^6",
+    "@salesforce/sf-plugins-core": "^9",
+    "@salesforce/source-deploy-retrieve": "^11",
+    "fast-xml-parser": "^4",
+    "diff": "^5",
+    "diff2html": "^3",
+    "highlight.js": "^11",
+    "micromatch": "^4",
+    "p-limit": "^4",
+    "p-retry": "^5",
+    "cli-progress": "^3",
+    "chalk": "^4",
+    "ansi-escapes": "^4",
+    "strip-ansi": "^6"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "@types/node": "^18",
+    "@types/diff": "^5",
+    "@types/micromatch": "^4",
+    "@types/cli-progress": "^3",
+    "@types/strip-ansi": "^5",
+    "mocha": "^10",
+    "@types/mocha": "^10",
+    "@oclif/test": "^3",
+    "ts-node": "^10",
+    "eslint": "^8",
+    "@typescript-eslint/eslint-plugin": "^6",
+    "@typescript-eslint/parser": "^6"
+  }
+}

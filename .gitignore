@@ -1,0 +1,9 @@
+node_modules/
+lib/
+*.log
+.drift-cache/
+.DS_Store
+*.env
+oclif.manifest.json
+/.claude/
+/.idea/

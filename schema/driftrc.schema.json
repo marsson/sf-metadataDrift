@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DriftRC Configuration",
+  "description": "Configuration file for @flightcentre/sf-data-drift",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "targetOrg": { "type": "string", "description": "Default org alias or username" },
+    "defaultFormat": { "type": "string", "enum": ["table", "json", "html"], "default": "table" },
+    "defaultOutput": { "type": "string", "description": "Default output file path" },
+    "batchSize": { "type": "integer", "minimum": 50, "maximum": 2000, "default": 500 },
+    "retrieveTimeout": { "type": "integer", "minimum": 5000, "default": 60000 },
+    "parallelBatches": { "type": "integer", "minimum": 1, "maximum": 5, "default": 1 },
+    "workers": { "type": "integer", "minimum": 1, "default": 4 },
+    "workerMemoryMb": { "type": "integer", "minimum": 128, "default": 512 },
+    "apiVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+$" },
+    "reportOrgOnly": { "type": "boolean", "default": false },
+    "ignorePatterns": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Glob patterns to exclude from comparison"
+    },
+    "exclusions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "useDefaults": { "type": "boolean", "default": true },
+        "additionalTypes": { "type": "array", "items": { "type": "string" } },
+        "includeOverride": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "xmlNormalization": { "type": "boolean", "default": true },
+        "ignoreWhitespace": { "type": "boolean", "default": true },
+        "ignoreComments": { "type": "boolean", "default": true },
+        "contextLines": { "type": "integer", "minimum": 0, "default": 5 }
+      }
+    },
+    "htmlReport": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "title": { "type": "string", "default": "Salesforce Drift Report" },
+        "theme": { "type": "string", "enum": ["light", "dark"], "default": "light" },
+        "includeUnchanged": { "type": "boolean", "default": false },
+        "syntaxHighlight": { "type": "boolean", "default": true }
+      }
+    },
+    "tempDir": { "type": "string" },
+    "keepTemp": { "type": "boolean", "default": false },
+    "verbose": { "type": "boolean", "default": false }
+  }
+}
