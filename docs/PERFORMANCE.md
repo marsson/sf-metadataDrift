@@ -38,7 +38,7 @@ Components are grouped by metadata type and split into batches of `--batch-size`
 Components: 4,700
 Batch size: 500
 → 10 batches
-→ Each batch: 1 retrieve call + 1 poll loop (avg 15-30s per batch)
+→ Each batch: 1 retrieve call + 1 poll loop (avg 15–30s per batch)
 → Batches run: sequentially by default, or parallel with --parallel-batches N
 ```
 
@@ -65,47 +65,29 @@ MDAPI retrieval is asynchronous. The tool polls for completion with exponential 
 
 ## Comparison Architecture
 
-### Worker Thread Pool
+### Concurrent Comparison
 
-File comparison runs in a pool of Node.js `worker_threads`. Each worker handles one component at a time:
+File comparison runs as concurrent async tasks using `p-limit`. Each task processes one component at a time. The concurrency limit is set by `--workers` (default: `os.cpus().length - 1`).
 
 ```
-Main thread: orchestrate, aggregate results, write output
-Worker 1:    parse + normalise + diff ApexClass/AccountController
-Worker 2:    parse + normalise + diff ApexClass/LeadService
-Worker 3:    parse + normalise + diff CustomObject/Account
+Orchestrator: dispatch tasks, aggregate results, write output
+Task 1:       read + normalise + diff ApexClass/AccountController
+Task 2:       read + normalise + diff ApexClass/LeadService
+Task 3:       read + normalise + diff CustomObject/Account
 ...
 ```
 
-Default workers: `os.cpus().length - 1` (leaves one CPU for the main thread and OS). Override with `--workers N`.
+Override concurrency with `--workers N`. Higher values help when files are small and I/O-bound; lower values help under memory pressure.
 
 ### XML Normalisation Strategy
 
-For XML metadata, normalisation runs before diff to eliminate false positives from node reordering. The normaliser uses `fast-xml-parser` (SAX-based, streaming) to avoid loading entire files into memory.
+For XML metadata, normalisation runs before diff to eliminate false positives from node reordering. The normaliser uses `fast-xml-parser` to parse both files into an AST, sort all nodes and object keys alphabetically, then serialise back to canonical XML.
 
 Time complexity: O(n log n) per file where n = number of XML nodes (dominated by sort).
 
 ### Diff Algorithm
 
 The tool uses the **Myers diff algorithm** via the `diff` npm package, which is O(ND) where N = file size and D = number of edits. For files with low drift (common case), this is very fast.
-
-For **very large files** (>50,000 lines), the tool automatically switches to a chunked diffing strategy that processes the file in segments and merges results, capping memory usage at ~50MB per worker.
-
----
-
-## Memory Management
-
-### Streaming I/O
-
-Files are never fully loaded into memory during normalisation. The XML normaliser uses a SAX parser and emits nodes as they are parsed. Only the sort buffer for each parent node's children is held in memory at once.
-
-### Worker Memory Cap
-
-Each worker is capped at `--worker-memory` MB (default: 512MB). If a worker exceeds this while processing a very large component, it falls back to a disk-spill strategy.
-
-### HTML Report Generation
-
-HTML output is generated as a stream and written to disk incrementally. The full set of diff data is never held in memory simultaneously. For large reports (>1000 drifted components), the generator uses a template with lazy-loaded diff sections.
 
 ---
 
@@ -116,19 +98,10 @@ Downloaded org metadata is stored in a temp directory (default: OS temp). Estima
 - Average component size: 5–20 KB
 - 1,000 components: ~5–20 MB
 - 10,000 components: ~50–200 MB
-- 50,000 components: ~250 MB–1 GB
 
 Use `--temp-dir` to control where this lands, and `--keep-temp` to preserve it for inspection or repeated comparisons without re-downloading.
 
-The temp directory structure mirrors the org's source format:
-```
-<temp-dir>/
-  org-snapshot/
-    classes/
-    objects/
-    flows/
-    ...
-```
+The temp directory is automatically cleaned up after each run unless `--keep-temp` is specified. Use `sf drift clean --all` to remove any leftover directories.
 
 ---
 
@@ -141,7 +114,7 @@ In CI, cache the retrieved org snapshot between runs to speed up repeated scans:
 ```yaml
 # GitHub Actions example
 - name: Cache org snapshot
-  uses: actions/cache@v3
+  uses: actions/cache@v4
   with:
     path: .drift-cache
     key: org-snapshot-${{ env.ORG_ID }}-${{ github.run_id }}
@@ -159,9 +132,10 @@ In CI, cache the retrieved org snapshot between runs to speed up repeated scans:
 
 ### Incremental Scans
 
-Use `--include-types` to only scan the types most likely to drift in a given PR context. For example, if a PR only touches Apex, restrict the scan:
+Use `--include-types` to only scan the types most likely to drift in a given PR context:
 
 ```bash
+# PR only touches Apex — restrict the scan
 sf drift detect -o myOrg --include-types ApexClass,ApexTrigger,ApexTestSuite
 ```
 
@@ -180,9 +154,8 @@ sf drift detect -o myOrg --no-progress
 | Scenario | Recommendation |
 |---|---|
 | Timeouts on large org | `--batch-size 200 --retrieve-timeout 120000` |
-| Slow comparison on many large files | `--workers 8` (if CPU permits) |
+| Slow comparison on many files | `--workers 8` (if CPU permits) |
 | Low disk space | `--temp-dir /fast-ssd-path` |
 | CI speed optimisation | `--no-progress --parallel-batches 3 --keep-temp` (with caching) |
 | Quick targeted scan | `--include-types ApexClass,Flow` |
 | Full audit scan | `--no-defaults-exclusion --report-org-only` |
-| Memory pressure on huge XML | `--worker-memory 256` (reduce; triggers earlier disk spill) |

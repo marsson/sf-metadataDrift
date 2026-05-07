@@ -4,7 +4,7 @@ import { SfCommand, Flags } from '@salesforce/sf-plugins-core';
 import chalk from 'chalk';
 
 const DEFAULT_RC = {
-  $schema: 'https://raw.githubusercontent.com/marsson/sf-data-drift/main/schema/driftrc.schema.json',
+  $schema: 'https://raw.githubusercontent.com/marsson/sf-metadata-drift/main/schema/driftrc.schema.json',
   defaultFormat: 'table',
   batchSize: 500,
   retrieveTimeout: 60000,

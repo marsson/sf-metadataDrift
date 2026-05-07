@@ -7,7 +7,7 @@ Certain Salesforce metadata types are inherently **environment-dependent** or **
 - **Profiles** contain permissions for every object, field, class, and page in the org. A single new object deployment changes the profile. Comparing profiles creates hundreds of false drift signals.
 - **Permission Sets** have the same problem.
 - **Installed Package metadata** reflects the current package version in the org — managing this as first-party drift is incorrect.
-- **Flexi-page / Lightning Page** references vary by org record type configuration.
+- **Settings** differ between sandbox and production and are not routinely deployed as source.
 
 The default exclusion list deliberately omits these types to give clean, actionable drift results focused on **custom and configuration metadata you own**.
 
@@ -15,7 +15,7 @@ The default exclusion list deliberately omits these types to give clean, actiona
 
 ## Default Exclusion List
 
-These types are excluded by default. Use `--no-defaults-exclusion` to disable all defaults, or `--exclusions.includeOverride` to selectively re-include individual types.
+These types are excluded by default. Use `--no-defaults-exclusion` to disable all defaults, or `exclusions.includeOverride` in `.driftrc.json` to selectively re-include individual types.
 
 ### Permissions & Access Control
 
@@ -32,15 +32,12 @@ These types are excluded by default. Use `--no-defaults-exclusion` to disable al
 | Type | API Name | Reason |
 |---|---|---|
 | Installed Package | `InstalledPackage` | Tracks managed package versions; org-specific |
-| Package Version | `Package` | Not first-party metadata |
 
 ### Org-Configuration Types
 
 | Type | API Name | Reason |
 |---|---|---|
 | Settings | `Settings` | Org-feature flags; vary between sandbox and production |
-| Business Process | `BusinessProcess` | Stage configuration; often org-specific |
-| Record Type | `RecordType` | Assignment driven by org user configuration |
 
 ### System-Generated / Volatile Types
 
@@ -48,9 +45,11 @@ These types are excluded by default. Use `--no-defaults-exclusion` to disable al
 |---|---|---|
 | Standard Value Set | `StandardValueSet` | Salesforce-managed; not deployable as custom |
 | Standard Value Set Translation | `StandardValueSetTranslation` | Same |
-| AI Prediction Builder | `AIApplication`, `AIApplicationConfig` | Org-specific ML models |
+| AI Application | `AIApplication` | Org-specific ML models |
+| AI Application Config | `AIApplicationConfig` | Org-specific ML models |
 | Lightning Experience Theme | `LightningExperienceTheme` | Org branding; not code |
-| Community | `Network`, `NetworkBranding` | Highly org-specific; multi-page config |
+| Network | `Network` | Experience Cloud; highly org-specific |
+| Network Branding | `NetworkBranding` | Experience Cloud; highly org-specific |
 
 ---
 
@@ -85,10 +84,9 @@ To include `Profile` while keeping all other defaults:
 }
 ```
 
-Via CLI:
+Via CLI — `--no-defaults-exclusion` removes **all** defaults, so specify everything you want to include:
 ```bash
 sf drift detect -o myOrg --no-defaults-exclusion --include-types Profile
-# Note: --no-defaults-exclusion removes ALL defaults; you must list everything you want
 ```
 
 ### Disable All Exclusions
@@ -113,11 +111,11 @@ Use defaults. The excluded types are not managed through normal deployments.
 {
   "exclusions": {
     "useDefaults": true,
-    "includeOverride": [],
     "additionalTypes": ["Report", "Dashboard"]
   }
 }
 ```
+
 Reports and dashboards are often modified in production without being committed — exclude them for a focused audit.
 
 ### Compliance / Security Audit

@@ -304,7 +304,7 @@ export class HtmlReporter implements Reporter {
 </div>
 
 <footer>
-  sf-data-drift by Marsson &nbsp;·&nbsp; v${escapeHtml(report.meta.toolVersion)}
+  sf-metadata-drift by Marsson &nbsp;·&nbsp; v${escapeHtml(report.meta.toolVersion)}
   &nbsp;·&nbsp; ${escapeHtml(report.meta.projectDir)}
 </footer>
 

@@ -1,8 +1,8 @@
-# sf-data-drift
+:# sf-metadata-drift
 
 **Detect metadata drift between a Salesforce org and its Git repository.**
 
-`sf-data-drift` is a Salesforce CLI plugin that compares every metadata component in your SFDX source repository against the live org and tells you exactly what has changed, what is missing, and what exists only in the org. It understands SFDX source format natively — decomposed objects, field subfolders, LWC bundles — and eliminates common false positives caused by XML node reordering or whitespace-only differences.
+`sf-metadata-drift` is a Salesforce CLI plugin that compares every metadata component in your SFDX source repository against the live org and tells you exactly what has changed, what is missing, and what exists only in the org. It understands SFDX source format natively — decomposed objects, field subfolders, LWC bundles — and eliminates common false positives caused by XML node reordering or whitespace-only differences.
 
 ---
 
@@ -35,14 +35,14 @@ The target org must be authenticated via `sf org login` before running.
 ### As a Salesforce CLI plugin (recommended)
 
 ```bash
-sf plugins install @marsson/sf-data-drift
+sf plugins install @marsson/sf-metadata-drift
 ```
 
 ### From source
 
 ```bash
-git clone https://github.com/marsson/sf-data-drift.git
-cd sf-data-drift
+git clone https://github.com/marsson/sf-metadata-drift.git
+cd sf-metadata-drift
 npm install
 npm run build
 ./bin/run.js drift detect --help
@@ -122,7 +122,7 @@ Removes temporary directories left behind by `--keep-temp`.
 
 ```bash
 sf drift clean --temp-dir ./.drift-cache
-sf drift clean --all    # removes all sf-data-drift-* dirs from the OS temp folder
+sf drift clean --all    # removes all sf-metadata-drift-* dirs from the OS temp folder
 ```
 
 ---
@@ -232,9 +232,11 @@ Every numeric and boolean setting can be provided via environment variable, usef
 | `SF_DRIFT_OUTPUT` | `--output` |
 | `SF_DRIFT_BATCH_SIZE` | `--batch-size` |
 | `SF_DRIFT_RETRIEVE_TIMEOUT` | `--retrieve-timeout` |
+| `SF_DRIFT_PARALLEL_BATCHES` | `--parallel-batches` |
 | `SF_DRIFT_WORKERS` | `--workers` |
-| `SF_DRIFT_VERBOSE` | `--verbose` |
 | `SF_DRIFT_API_VERSION` | `--api-version` |
+| `SF_DRIFT_REPORT_ORG_ONLY` | `--report-org-only` |
+| `SF_DRIFT_VERBOSE` | `--verbose` |
 
 ---
 
@@ -314,7 +316,7 @@ The command exits with code `1` when drift is detected, making it straightforwar
 
 ## Supported metadata types
 
-`sf-data-drift` recognises over 60 metadata file suffixes out of the box, including:
+`sf-metadata-drift` recognises over 60 metadata file suffixes out of the box, including:
 
 ApexClass · ApexTrigger · ApexPage · Flow · FlexiPage · CustomObject · CustomField · ValidationRule · RecordType · Layout · ListView · CustomMetadata · CustomLabel · StaticResource · LightningComponentBundle · AuraDefinitionBundle · PermissionSet · Profile · Report · Dashboard · and more.
 

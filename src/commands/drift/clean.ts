@@ -18,7 +18,7 @@ export default class DriftClean extends SfCommand<void> {
       summary: 'Path to the specific temp/cache directory to remove.',
     }),
     all: Flags.boolean({
-      summary: 'Remove all sf-data-drift-* directories from the OS temp folder.',
+      summary: 'Remove all sf-metadata-drift-* directories from the OS temp folder.',
       default: false,
     }),
     force: Flags.boolean({
@@ -44,7 +44,7 @@ export default class DriftClean extends SfCommand<void> {
       const tmpDir = os.tmpdir();
       const entries = fs.readdirSync(tmpDir);
       for (const entry of entries) {
-        if (entry.startsWith('sf-data-drift-')) {
+        if (entry.startsWith('sf-metadata-drift-')) {
           dirsToRemove.push(path.join(tmpDir, entry));
         }
       }

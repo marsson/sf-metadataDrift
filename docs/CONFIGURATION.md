@@ -4,16 +4,19 @@
 
 Place `.driftrc.json` in your SFDX project root (same directory as `sfdx-project.json`). Settings in the file are merged with and overridden by CLI flags.
 
+Run `sf drift init` to generate a pre-filled config file.
+
 ### Full Example
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/flightcentre/sf-data-drift/main/schema/driftrc.schema.json",
+  "$schema": "https://raw.githubusercontent.com/marsson/sf-metadata-drift/main/schema/driftrc.schema.json",
   "targetOrg": "production",
   "defaultFormat": "html",
   "defaultOutput": "./reports/drift-latest.html",
   "batchSize": 400,
   "retrieveTimeout": 90000,
+  "parallelBatches": 1,
   "workers": 4,
   "apiVersion": "59.0",
   "reportOrgOnly": false,
@@ -34,8 +37,8 @@ Place `.driftrc.json` in your SFDX project root (same directory as `sfdx-project
     "contextLines": 5
   },
   "htmlReport": {
-    "title": "Flight Centre Salesforce Drift Report",
-    "theme": "dark",
+    "title": "Salesforce Drift Report",
+    "theme": "light",
     "includeUnchanged": false,
     "syntaxHighlight": true
   },
@@ -58,9 +61,13 @@ Place `.driftrc.json` in your SFDX project root (same directory as `sfdx-project
 | `defaultOutput` | `string` | — | Default output file path |
 | `batchSize` | `number` | `500` | Components per MDAPI retrieve batch |
 | `retrieveTimeout` | `number` | `60000` | Per-batch timeout in milliseconds |
-| `workers` | `number` | `CPUs - 1` | Parallel comparison worker threads |
+| `parallelBatches` | `number` | `1` | Concurrent retrieval batches (max 5) |
+| `workers` | `number` | `CPUs - 1` | Concurrent comparison tasks |
 | `apiVersion` | `string` | org max | Salesforce API version |
 | `reportOrgOnly` | `boolean` | `false` | Report components in org but not in repo |
+| `tempDir` | `string` | OS temp | Directory for downloaded org metadata |
+| `keepTemp` | `boolean` | `false` | Keep downloaded metadata after the run |
+| `verbose` | `boolean` | `false` | Enable verbose logging |
 
 ---
 
@@ -119,12 +126,20 @@ Controls how files are compared.
 
 When `xmlNormalization` is `true`, the engine:
 1. Parses both XML files (repo and org) into an AST
-2. For each array of sibling elements with a `fullName` or `name` child node: sorts alphabetically by that key
-3. Sorts XML attributes alphabetically
+2. Sorts object keys alphabetically for a canonical property order
+3. For arrays of sibling elements: sorts by `fullName`, `name`, `label`, or `apiName`
 4. Serialises back to canonical XML
 5. Runs text diff on the normalised output
 
 This prevents false positives where Salesforce retrieves nodes in a different order than the deployed order.
+
+#### Whitespace Handling
+
+When `ignoreWhitespace` is `true`, the engine:
+1. Normalises line endings (`\r\n` → `\n`)
+2. Strips trailing whitespace from each line
+3. Collapses runs of three or more blank lines to two
+4. If the only remaining differences are whitespace characters, the component is treated as unchanged
 
 ---
 
@@ -138,19 +153,16 @@ Controls the HTML output format.
 | `theme` | `"light"\|"dark"` | `"light"` | Colour theme |
 | `includeUnchanged` | `boolean` | `false` | Include unchanged components in the table |
 | `syntaxHighlight` | `boolean` | `true` | Syntax-highlight diff content |
-| `selfContained` | `boolean` | `true` | Inline all CSS/JS (no external dependencies) |
 
 ---
 
-## Project-level vs User-level Config
+## Settings Priority
 
-The tool looks for config in this priority order (highest to lowest):
+Settings are resolved in this order (highest priority first):
 
-1. **CLI flags** — always win
-2. **Environment variables** — `SF_DRIFT_*`
-3. **Project `.driftrc.json`** — `<project-root>/.driftrc.json`
-4. **User config** — `~/.sf/drift/config.json`
-5. **Built-in defaults**
+```
+CLI flags  →  SF_DRIFT_* environment variables  →  .driftrc.json  →  built-in defaults
+```
 
 ---
 
@@ -160,7 +172,7 @@ Add the `$schema` key to get IDE autocompletion and validation in VS Code:
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/flightcentre/sf-data-drift/main/schema/driftrc.schema.json"
+  "$schema": "https://raw.githubusercontent.com/marsson/sf-metadata-drift/main/schema/driftrc.schema.json"
 }
 ```
 

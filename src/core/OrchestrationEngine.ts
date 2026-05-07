@@ -62,7 +62,7 @@ export class OrchestrationEngine {
 
     const tempDir = config.tempDir
       ? path.resolve(config.tempDir)
-      : makeTempDir('sf-data-drift-');
+      : makeTempDir('sf-metadata-drift-');
 
     if (verbose) this.logger.info(`Temp directory: ${tempDir}`);
 
@@ -284,6 +284,6 @@ export function printBanner(orgAlias: string, orgId: string): void {
  |____/ \\__,_|\\__\\__,_| |____/|_|  |_|_|  \\__|`);
 
   process.stdout.write(banner + '\n');
-  process.stdout.write(chalk.dim(' sf-data-drift by Marsson\n'));
+  process.stdout.write(chalk.dim(' sf-metadata-drift by Marsson\n'));
   process.stdout.write(` ${chalk.dim('Target org:')} ${chalk.bold(orgAlias)} ${chalk.dim(orgId ? `(${orgId})` : '')}\n`);
 }

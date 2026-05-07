@@ -43,24 +43,24 @@ sf org login jwt \
 
 ## Installing the Plugin
 
-### From npm (Production)
+### From npm (recommended)
 
 ```bash
-sf plugins install @flightcentre/sf-data-drift
+sf plugins install @marsson/sf-metadata-drift
 ```
 
 Verify:
 ```bash
-sf plugins list | grep data-drift
+sf plugins list | grep metadata-drift
 sf drift --help
 ```
 
-### From Source (Development)
+### From Source (development)
 
 ```bash
 # Clone the repository
-git clone https://github.com/flightcentre/sf-data-drift.git
-cd sf-data-drift
+git clone https://github.com/marsson/sf-metadata-drift.git
+cd sf-metadata-drift
 
 # Install dependencies
 npm install
@@ -68,8 +68,8 @@ npm install
 # Link the plugin to your local SF CLI
 sf plugins link .
 
-# Verify
-sf drift --help
+# Or run directly without linking
+./bin/run.js drift detect --help
 ```
 
 ### In a CI/CD Pipeline (GitHub Actions example)
@@ -79,7 +79,7 @@ sf drift --help
   run: npm install -g @salesforce/cli
 
 - name: Install drift plugin
-  run: sf plugins install @flightcentre/sf-data-drift
+  run: sf plugins install @marsson/sf-metadata-drift
 
 - name: Authenticate to org
   run: |
@@ -99,7 +99,7 @@ sf drift --help
       --output drift-report.json
 
 - name: Upload drift report
-  uses: actions/upload-artifact@v3
+  uses: actions/upload-artifact@v4
   with:
     name: drift-report
     path: drift-report.json
@@ -131,7 +131,7 @@ The `--dry-run` flag scans your repository and lists what *would* be retrieved w
 ## Updating
 
 ```bash
-sf plugins update @flightcentre/sf-data-drift
+sf plugins update @marsson/sf-metadata-drift
 ```
 
 ---
@@ -139,7 +139,7 @@ sf plugins update @flightcentre/sf-data-drift
 ## Uninstalling
 
 ```bash
-sf plugins uninstall @flightcentre/sf-data-drift
+sf plugins uninstall @marsson/sf-metadata-drift
 ```
 
 ---
@@ -168,6 +168,9 @@ sf drift detect --target-org myOrg --batch-size 200
 ### Plugin not found after install
 
 ```bash
-sf plugins install @flightcentre/sf-data-drift --force
-sf plugins trust verify --npm @flightcentre/sf-data-drift
+sf plugins install @marsson/sf-metadata-drift --force
 ```
+
+### `This directory does not contain a valid Salesforce DX project`
+
+This can occur when `--source-dir` is used without a `sfdx-project.json`. The plugin handles this automatically by generating a stub project file in the temp directory. If you see this error, ensure you are using version `0.1.0` or later.
