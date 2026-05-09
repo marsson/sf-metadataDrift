@@ -1,6 +1,6 @@
 {
   "name": "@marsson/sf-metadata-drift",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Measure metadata drift between a Salesforce org and its Git repository",
   "author": "Marsson",
   "main": "lib/index.js",
