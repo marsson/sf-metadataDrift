@@ -5,6 +5,10 @@
   "author": "Marsson",
   "main": "lib/index.js",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marsson/sf-metadataDrift.git"
+  },
   "files": [
     "/bin",
     "/lib",
