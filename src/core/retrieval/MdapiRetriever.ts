@@ -22,7 +22,56 @@ export class MdapiRetriever {
     this.logger = DriftLogger.create(isVerbose);
   }
 
+  /**
+   * Retrieve a batch, isolating any component whose conversion fails.
+   *
+   * A single component can abort the whole MDAPI→source conversion — e.g. a large Flow with
+   * >1000 XML entity references trips fast-xml-parser's `maxTotalExpansions` guard
+   * ("Entity expansion limit exceeded: N > 1000"). Rather than let that fail the batch (and,
+   * upstream, the entire run), bisect the batch and retry each half so only the offending
+   * component(s) are skipped and recorded as failures; everything else is still retrieved.
+   */
   async retrieve(batch: RetrieveBatch): Promise<BatchRetrieveResult> {
+    try {
+      return await this.retrieveOnce(batch);
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      const entries = (batch.componentSet ?? []) as Array<{ type: string; apiName: string }>;
+
+      // Down to a single component that still fails — skip it, record it, keep going.
+      if (entries.length <= 1) {
+        const e = entries[0];
+        const failed: FailedComponent = e
+          ? { manifestKey: `${e.type}:${e.apiName}`, metadataType: e.type, apiName: e.apiName, error: errMsg }
+          : { manifestKey: 'Unknown', metadataType: 'Unknown', apiName: 'Unknown', error: errMsg };
+        this.logger.warn(`Skipping component that failed to retrieve/convert: ${failed.manifestKey} (${errMsg})`);
+        return { success: false, retrievedPaths: [], failures: [failed] };
+      }
+
+      // Bisect to isolate the offender(s) instead of losing the whole batch.
+      this.logger.verbose(
+        `Batch ${batch.id} failed (${errMsg}); bisecting ${entries.length} components to isolate the offender`
+      );
+      const mid = Math.floor(entries.length / 2);
+      const halves = [entries.slice(0, mid), entries.slice(mid)];
+      const merged: BatchRetrieveResult = { success: true, retrievedPaths: [], failures: [] };
+      for (let h = 0; h < halves.length; h++) {
+        const sub: RetrieveBatch = {
+          ...batch,
+          componentSet: halves[h],
+          componentCount: halves[h].length,
+          label: `${batch.label} [${h + 1}/2]`,
+        };
+        const r = await this.retrieve(sub);
+        merged.retrievedPaths.push(...r.retrievedPaths);
+        merged.failures.push(...r.failures);
+        merged.success = merged.success && r.success;
+      }
+      return merged;
+    }
+  }
+
+  private async retrieveOnce(batch: RetrieveBatch): Promise<BatchRetrieveResult> {
     return withRetry(async () => {
       try {
         const { ComponentSet } = await import('@salesforce/source-deploy-retrieve');
@@ -95,7 +144,7 @@ export class MdapiRetriever {
         };
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : String(err);
-        this.logger.warn(`Batch ${batch.id} retrieve error: ${errMsg}`);
+        this.logger.verbose(`Batch ${batch.id} retrieve attempt failed: ${errMsg}`);
         throw err;
       }
     }, { maxRetries: 2, initialDelayMs: 3_000 });
