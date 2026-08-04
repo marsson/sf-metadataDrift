@@ -35,6 +35,7 @@
     "build": "tsc -b",
     "clean": "rm -rf lib",
     "prepack": "npm run build && oclif manifest",
+    "prepare": "npm run build && oclif manifest",
     "test": "TS_NODE_PROJECT=tsconfig.test.json mocha --timeout 30000",
     "lint": "eslint src --ext .ts"
   },
